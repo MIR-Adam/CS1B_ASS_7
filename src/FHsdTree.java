@@ -138,35 +138,33 @@ public class FHsdTree<E> extends FHtree<E> implements Cloneable {
 			traverse(func, treeNode.getSibling(), branch);
 		}
 	}
-	
-	public int size()
-	{
-		return size((FHsdTreeNode<E>)(mRoot), 0, 0);
+
+	public int size() {
+		return size((FHsdTreeNode<E>) (mRoot), 0, 0);
 	}
-	
-	public int size(FHsdTreeNode<E> treeNode, int branch, int returnSize)
-	{
-		//if treeNode is null
+
+	public int size(FHsdTreeNode<E> treeNode, int branch, int returnSize) {
+		// if treeNode is null
 		if (treeNode == null) {
 			return returnSize;
 		}
-		
+
 		if (treeNode.checkDeleted() == false) {
 			returnSize++;
 			returnSize = size(treeNode.getFirstChild(), branch++, returnSize);
 		}
-		
-		if(branch > 0) {
+
+		if (branch > 0) {
 			returnSize = size(treeNode.getSibling(), branch, returnSize);
 		}
-		
+
 		return returnSize;
 	}
-	
+
 	void displayPhysical() {
-		displayPhysical((FHsdTreeNode<E>)(mRoot), 0);
+		displayPhysical((FHsdTreeNode<E>) (mRoot), 0);
 	}
-	
+
 	void displayPhysical(FHsdTreeNode<E> treeNode, int branch) {
 		String indent;
 
@@ -184,7 +182,7 @@ public class FHsdTree<E> extends FHtree<E> implements Cloneable {
 		// pre-order processing done here ("visit")
 		System.out.println(indent + treeNode.data);
 
-		if(treeNode.checkDeleted()) {
+		if (treeNode.checkDeleted()) {
 			System.out.println("[DELETED]");
 			System.out.println();
 		}
@@ -193,5 +191,48 @@ public class FHsdTree<E> extends FHtree<E> implements Cloneable {
 		if (branch > 0)
 			displayPhysical(treeNode.getSibling(), branch);
 	}
-	
+
+	public boolean collectGarbage() {
+
+		int virtual = size();
+		int physical = sizePhysical();
+
+		if (virtual == 0) {
+			return false;
+		}
+
+		if (physical > virtual) {
+			// reset tree
+			collectGarbage((FHsdTreeNode<E>) (mRoot), 0);
+		}
+
+		return physical > virtual;
+	}
+
+	public void collectGarbage(FHsdTreeNode<E> treeNode, int Branch) {
+
+		if (treeNode == null || mSize == 0) {
+			return;
+		}
+
+		if (treeNode.checkDeleted()) {
+			// get previous node
+			FHsdTreeNode<E> previous = treeNode.getPrevious();
+
+			// remove the node
+			super.removeNode(treeNode);
+			
+			collectGarbage(previous.getFirstChild(), Branch++);
+
+			if (Branch > 0) {
+				collectGarbage(previous.getSibling(), Branch);
+			}
+			return;
+		}
+		collectGarbage(treeNode.getFirstChild(), Branch++);
+		if (Branch > 0) {
+			collectGarbage(treeNode.getSibling(), Branch);
+		}
+		return;
+	}
 }
